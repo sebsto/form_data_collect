@@ -4,8 +4,14 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [dev-packages]
+pylint = "*"
+pytest = "*"
+mocker = "*"
+pytest-mock = "*"
+autopep8 = "*"
 
 [packages]
+boto3 = "*"
 
 [requires]
 python_version = "3.8"

@@ -3,7 +3,6 @@ import json
 import logging
 import base64
 from datetime import datetime
-
 from urllib.parse import parse_qs
 
 import boto3 
@@ -18,7 +17,7 @@ try:
     REGION_NAME = os.environ['AWS_REGION']
     log.info(f'Going to use region name {REGION_NAME}')
 except KeyError:
-    LOGGER.warning("No AWS_REGION environment variable defined, using default 'eu-central-1'")
+    log.warning("No AWS_REGION environment variable defined, using default 'eu-central-1'")
     REGION_NAME = 'eu-central-1'
 
 try:
@@ -40,7 +39,7 @@ def dynamodb_resource():
         result = session.resource('dynamodb')
     except KeyError:
         # env var does not exist, assume we're running locally
-        LOGGER.info("We're running locally for tests.  Did you start DynamoDB local ?")
+        log.info("We're running locally for tests.  Did you start DynamoDB local ?")
         session = boto3.Session(region_name=REGION_NAME)
         result = session.resource('dynamodb', endpoint_url=DDB_LOCAL_ENDPOINT)
 
@@ -97,6 +96,8 @@ def lambda_handler(event, context):
     write_data(event, data)
     log.debug('Done writing to dynamodb')
 
+    #TODO catch exceptions and return 500 
+    
     response = {
         'statusCode': 200,
         'headers': {
