@@ -26,6 +26,22 @@ Resources:
 
       StageName: "prod"
 
+  DDBStreamFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: src/
+      Handler: database_stream.app.lambda_handler
+      Runtime: python3.8
+      Events:
+        DDBEvent:
+          Type: DynamoDB
+          Properties:
+            Stream: 
+              !GetAtt DataCollectionDatabase.StreamArn   # This must be the name of a DynamoDB table declared in the same template file
+            StartingPosition: TRIM_HORIZON
+            BatchSize: 10
+            Enabled: true            
+
   FormDataCollectFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
@@ -33,7 +49,7 @@ Resources:
       Handler: form_data_collect.app.lambda_handler
       Runtime: python3.8
       Events:
-        FormDataCollect:
+        API:
           Type: HttpApi # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
           Properties:
             ApiId: !Ref FormDataCollectApi
@@ -65,6 +81,8 @@ Resources:
         - AttributeName: sk
           KeyType: RANGE
       BillingMode: PAY_PER_REQUEST
+      StreamSpecification:
+         StreamViewType: NEW_IMAGE
 
 Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function

@@ -16,7 +16,10 @@ For subsequent deployments, use:
 
 ```bash
 AWS_PROFILE=seb
-sam build && sam local invoke --profil $AWS_PROFILE -e events/event.json -n events/environment.json
+
+sam build && sam local invoke "FormDataCollectFunction" --profile $AWS_PROFILE -e events/event-api.json -n events/environment.json
+
+sam build && sam local invoke "DDBStreamFunction" --profile $AWS_PROFILE -e events/event-streaming.json -n events/environment.json
 ```
 
 ## Call API Gateway
@@ -31,6 +34,10 @@ curl -v -H "Origin: http://localhost:1313"  -H "Content-type: application/x-www-
 
 ```bash
 sam logs --profile $AWS_PROFILE --region $AWS_REGION --name FormDataCollectFunction --stack-name form-data-collect
+```
+
+```bash
+sam logs --profile $AWS_PROFILE --region $AWS_REGION --name DDBStreamFunction --stack-name form-data-collect
 ```
 
 ## Integration from HTML
