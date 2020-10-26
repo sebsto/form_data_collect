@@ -1,0 +1,10 @@
+{
+    "python.pythonPath": "/Users/stormacq/.local/share/virtualenvs/form-data-collect-tUIju1Vw/bin/python",
+    "python.testing.pytestArgs": [
+        "-s"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.nosetestsEnabled": false,
+    "python.testing.pytestEnabled": true,
+    "terminal.integrated.env.osx": { "PYTHONPATH" : "/Users/stormacq/Documents/amazon/code/nata/form-data-collect/src" }
+}

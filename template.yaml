@@ -1,0 +1,84 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  form-data-collect
+
+  SAM Template for form-data-collect
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 3
+
+Resources:
+  FormDataCollectApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      CorsConfiguration:
+        AllowOrigins:
+          - "http://localhost:1313"
+          - "https://nata.coach"
+        AllowMethods:
+          - OPTIONS
+          - POST
+      # RouteSettings: 
+      #   LoggingLevel: "INFO"
+
+      StageName: "prod"
+
+  FormDataCollectFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: form_data_collect/
+      Handler: app.lambda_handler
+      Runtime: python3.8
+      Events:
+        FormDataCollect:
+          Type: HttpApi # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            ApiId: !Ref FormDataCollectApi
+            Path: /form
+            Method: post
+      Policies:
+      - Version: '2012-10-17' # Custom Policy to access DynamoDB 
+        Statement:
+          - Effect: Allow
+            Action:
+              - dynamodb:PutItem
+            Resource: !GetAtt DataCollectionDatabase.Arn
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref DataCollectionDatabase
+
+  DataCollectionDatabase:
+    Type: 'AWS::DynamoDB::Table'
+    Properties:
+      TableName: nata-data-collection-form
+      AttributeDefinitions:
+        - AttributeName: pk
+          AttributeType: S
+        - AttributeName: sk
+          AttributeType: S
+      KeySchema:
+        - AttributeName: pk
+          KeyType: HASH
+        - AttributeName: sk
+          KeyType: RANGE
+      BillingMode: PAY_PER_REQUEST
+
+Outputs:
+  # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
+  # Find out more about other implicit resources you can reference within SAM
+  # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
+  FormdataCollectionApi:
+    Description: "API Gateway endpoint URL for Prod stage for Form Data Collect function"
+    Value: !Sub "https://${FormDataCollectApi}.execute-api.${AWS::Region}.amazonaws.com/prod/form/"
+  FormDataCollectFunction:
+    Description: "Form Data Collect Lambda Function ARN"
+    Value: !GetAtt FormDataCollectFunction.Arn
+  FormDataCollectFunctionIamRole:
+    Description: "Implicit IAM Role created for Form Data Collect function"
+    Value: !GetAtt FormDataCollectFunctionRole.Arn
+  FormDataCollectDatabase:
+    Description: "Database for Form Data Collect"
+    Value: !GetAtt DataCollectionDatabase.Arn

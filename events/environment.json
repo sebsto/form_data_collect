@@ -1,0 +1,6 @@
+{
+    "FormDataCollectFunction" : {
+        "TABLE_NAME" : "nata-data-collection-form",
+        "REGION_NAME" : "eu-central-1"
+    }
+}
