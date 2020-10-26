@@ -41,7 +41,17 @@ Resources:
             StartingPosition: TRIM_HORIZON
             BatchSize: 10
             Enabled: true            
-
+      Policies:
+      - Version: '2012-10-17' # Custom Policy to access DynamoDB 
+        Statement:
+          - Effect: Allow
+            Action:
+              - sns:Publish
+            Resource: !Ref NotificationSNSTopic
+      Environment:        
+        Variables:
+          SNS_TOPIC_ARN: !Ref NotificationSNSTopic
+  
   FormDataCollectFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
@@ -83,6 +93,16 @@ Resources:
       BillingMode: PAY_PER_REQUEST
       StreamSpecification:
          StreamViewType: NEW_IMAGE
+
+  NotificationSNSTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      Subscription:
+        - Endpoint: "sebastien.stormacq@gmail.com"
+          Protocol: "email"
+        - Endpoint: "nata_arbelaez@outlook.com"
+          Protocol: "email"
+      TopicName: "DataCollectionTopic"
 
 Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
