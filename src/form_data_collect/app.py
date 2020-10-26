@@ -20,17 +20,11 @@ except KeyError:
     log.warning("No AWS_REGION environment variable defined, using default 'eu-central-1'")
     REGION_NAME = 'eu-central-1'
 
-try:
-    DDB_TABLE_NAME = os.environ['TABLE_NAME']
-    log.info(f'Going to use table name {DDB_TABLE_NAME}')
-except KeyError:
-    log.error("No TABLE_NAME environment variable defined, calls will fail with error code 500")
-    DDB_TABLE_NAME = None
-
-DDB_LOCAL_ENDPOINT = 'http://localhost:8000'
-
 def dynamodb_resource():
     result = None 
+
+    DDB_LOCAL_ENDPOINT = 'http://localhost:8000'
+
     # check if we are running on AWS Lambda or locally (for tests)
     try:
         LAMBDA_RUNTIME = os.environ['AWS_EXECUTION_ENV']
@@ -51,14 +45,14 @@ def now():
     # return datetime.now()
     return int(datetime.utcnow().timestamp())
 
-def write_data(event, data):
+def write_data(table_name, event, data):
 
     try:
         data['created_at'] = now()
         data['event'] = event
         data['sk'] = data[data['sk']]
 
-        table = dynamodb_resource().Table(DDB_TABLE_NAME)
+        table = dynamodb_resource().Table(table_name)
         response = table.put_item(Item=data)
 
         log.debug(json.dumps(response))
@@ -71,7 +65,12 @@ def lambda_handler(event, context):
 
     log.debug(event) 
 
-    if DDB_TABLE_NAME == None:
+    # Get table name 
+    try:
+        DDB_TABLE_NAME = os.environ['TABLE_NAME']
+        log.info(f'Going to use table name {DDB_TABLE_NAME}')
+    except KeyError:
+        log.error("No TABLE_NAME environment variable defined, calls will fail with error code 500")
         response = {
             'statusCode': 500,
             'headers': {
@@ -93,7 +92,7 @@ def lambda_handler(event, context):
     log.debug(data)
 
     log.debug('Writing to dynamodb')
-    write_data(event, data)
+    write_data(DDB_TABLE_NAME, event, data)
     log.debug('Done writing to dynamodb')
 
     #TODO catch exceptions and return 500 

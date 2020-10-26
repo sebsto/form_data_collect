@@ -1,9 +1,11 @@
 import json
-
+import os
 import pytest
+from pytest_mock import mocker
+
+import boto3 
 
 from src.form_data_collect import app
-
 
 @pytest.fixture()
 def apigw_event():
@@ -54,14 +56,59 @@ def apigw_event():
         "isBase64Encoded": True
         }
 
+def test_happy_path(apigw_event, mocker):
+    
+    mocker.patch.dict(os.environ, {'TABLE_NAME':'nata-data-collection-form'})
 
+    ret = app.lambda_handler(apigw_event, "")
+    data = json.loads(ret['body'])
 
-def test_lambda_handler(apigw_event, mocker):
+    assert ret['statusCode'] == 200
+    assert 'status' in ret['body']
+    assert data['status'] == 'OK'
+
+def test_no_table_env_var(apigw_event, mocker):
+    
+    ret = app.lambda_handler(apigw_event, "")
+    data = json.loads(ret['body'])
+
+    assert ret['statusCode'] == 500
+    assert 'error' in ret['body']
+    assert 'TABLE_NAME' in data['error']
+
+def test_happy_path_dynamodb(apigw_event, mocker):
+    
+    DDB_LOCAL_ENDPOINT = 'http://localhost:8000'
+    mocker.patch.dict(os.environ, {'TABLE_NAME':'nata-data-collection-form'})
+
+    session = boto3.Session(region_name='eu-central-1')
+    resource = session.resource('dynamodb', endpoint_url=DDB_LOCAL_ENDPOINT)
+    table = resource.Table(os.environ['TABLE_NAME'])
+    table.delete_item(
+        Key= {
+            'pk': 'nata.coach.landing_page',
+            'sk': 'seb@stormacq.com'
+        }
+    )
 
     ret = app.lambda_handler(apigw_event, "")
     data = json.loads(ret["body"])
 
-    assert ret["statusCode"] == 200
-    assert "status" in ret["body"]
-    assert data["status"] == "OK"
+    # check response
+    assert ret['statusCode'] == 200
+    assert 'status' in ret['body']
+    assert data['status'] == 'OK'
+
+    # check database
+    result = table.get_item(
+        Key= {
+            'pk': 'nata.coach.landing_page',
+            'sk': 'seb@stormacq.com'
+        }        
+    )
+    record = result['Item']
+    assert 'event' in record
+    assert 'name' in record
+    assert record['name'] == 'seb'
+
     # assert "location" in data.dict_keys()

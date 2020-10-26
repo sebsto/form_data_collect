@@ -1,6 +1,10 @@
 
 # Created by https://www.gitignore.io/api/osx,linux,python,windows,pycharm,visualstudiocode
 
+# DynamoDB Local
+dynamodb* 
+shared-local-instance.db
+
 ## SAM 
 .aws-sam
 samconfig.toml
